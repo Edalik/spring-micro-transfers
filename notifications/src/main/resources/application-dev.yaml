@@ -1,0 +1,11 @@
+server:
+  port: 8088
+spring:
+  application:
+    name: mt-notifications
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-group
+    topic:
+      transfers-status: mt.transfers.status.info
