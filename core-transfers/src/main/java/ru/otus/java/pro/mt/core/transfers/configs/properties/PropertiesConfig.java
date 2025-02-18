@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties({
         LimitsIntegrationProperties.class,
         TransfersProperties.class,
-        RestClientProperties.class
+        DefaultRestClientProperties.class
 })
 public class PropertiesConfig {
 
