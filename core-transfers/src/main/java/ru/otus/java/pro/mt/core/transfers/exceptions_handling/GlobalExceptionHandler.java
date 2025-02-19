@@ -25,4 +25,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNPROCESSABLE_ENTITY
         );
     }
+
+    @ExceptionHandler(value = BadRequestException.class)
+    public ResponseEntity<ErrorDto> catchBadRequestException(BadRequestException e) {
+        return new ResponseEntity<>(new ErrorDto(e.getCode(), e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
 }

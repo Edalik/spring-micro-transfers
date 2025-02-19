@@ -1,4 +1,5 @@
 version: '3.8'
+name: environment
 
 services:
   prometheus:
@@ -8,12 +9,16 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - monitoring
 
   grafana:
     image: grafana/grafana-enterprise:latest
     container_name: grafana
     ports:
       - "3000:3000"
+    networks:
+      - monitoring
 
   core-transfers-postgres:
     image: postgres_custom_ru:latest
@@ -30,6 +35,8 @@ services:
       retries: 3
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/01.sql
+    networks:
+      - app
 
   mt-core-transfers:
     image: mt-core-transfers:latest
@@ -38,3 +45,79 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     ports:
       - "8181:8080"
+    depends_on:
+      - core-transfers-postgres
+    networks:
+      - app
+      - monitoring
+      - logging
+
+  limits:
+    image: limits:latest
+    container_name: limits
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8182:8182"
+    networks:
+      - app
+      - monitoring
+      - logging
+
+  elasticsearch:
+    image: elasticsearch:8.7.1
+    container_name: elasticsearch_springboot
+    environment:
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - logging
+
+  kibana:
+    image: kibana:8.7.1
+    container_name: kibana_springboot
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+    depends_on:
+      - elasticsearch
+    networks:
+      - logging
+
+  logstash:
+    image: logstash:8.7.1
+    container_name: logstash_springboot
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - logging
+    depends_on:
+      - elasticsearch
+
+networks:
+  app:
+    driver: bridge
+  monitoring:
+    driver: bridge
+  logging:
+    driver: bridge
+
+volumes:
+  elasticsearch_data:
+    driver: local

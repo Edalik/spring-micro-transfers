@@ -1,11 +1,14 @@
 package ru.otus.java.pro.mt.core.transfers.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.otus.java.pro.mt.core.transfers.configs.properties.TransfersProperties;
 import ru.otus.java.pro.mt.core.transfers.dtos.ExecuteTransferDtoRq;
 import ru.otus.java.pro.mt.core.transfers.entities.Transfer;
 import ru.otus.java.pro.mt.core.transfers.exceptions_handling.BusinessLogicException;
+import ru.otus.java.pro.mt.core.transfers.metrics.MetricsService;
 import ru.otus.java.pro.mt.core.transfers.repositories.TransfersRepository;
 import ru.otus.java.pro.mt.core.transfers.validators.TransferRequestValidator;
 
@@ -21,6 +24,7 @@ public class TransfersServiceImpl implements TransfersService {
     private final TransferRequestValidator transferRequestValidator;
     private final TransfersProperties transfersProperties;
     private final LimitsServiceImpl limitsService;
+    private final MetricsService metricsService;
 
     @Override
     public Optional<Transfer> getTransferById(String id, String clientId) {
@@ -33,17 +37,31 @@ public class TransfersServiceImpl implements TransfersService {
     }
 
     @Override
+    public List<Transfer> getTransfersPage(String clientId, Integer page, Integer pageSize) {
+        Pageable pageable = PageRequest.of(page, pageSize);
+        return transfersRepository.findByClientIdOrTargetClientId(clientId, clientId, pageable).stream().toList();
+    }
+
+    @Override
     public void execute(String clientId, ExecuteTransferDtoRq executeTransferDtoRq) {
-        transferRequestValidator.validate(executeTransferDtoRq);
-        // execution
-        if (!limitsService.isLimitEnough()) {
-            // ...
+        try {
+            metricsService.incrementTransfersTotal();
+            transferRequestValidator.validate(executeTransferDtoRq);
+            // execution
+            if (!limitsService.isLimitEnough()) {
+                // ...
+                throw new BusinessLogicException("Transfer limit exhausted", "LIMIT_EXHAUSTED");
+            }
+            if (executeTransferDtoRq.getAmount().compareTo(transfersProperties.getMaxTransferSum()) > 0) {
+                throw new BusinessLogicException("OOPS", "OOPS_CODE");
+            }
+            Transfer transfer = new Transfer(UUID.randomUUID().toString(), "1", "2", "1", "2", "Demo", BigDecimal.ONE);
+            save(transfer);
+            metricsService.incrementTransfersSuccess();
+        } catch (Exception e) {
+            metricsService.incrementTransfersFail();
+            throw e;
         }
-        if (executeTransferDtoRq.getAmount().compareTo(transfersProperties.getMaxTransferSum()) > 0) {
-            throw new BusinessLogicException("OOPS", "OOPS_CODE");
-        }
-        Transfer transfer = new Transfer(UUID.randomUUID().toString(), "1", "2", "1", "2", "Demo", BigDecimal.ONE);
-        save(transfer);
     }
 
     @Override
