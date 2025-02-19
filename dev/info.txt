@@ -7,3 +7,5 @@ https://editor.swagger.io/
 -Dspring.profiles.active=dev
 
 docker build . -t mt-core-transfers
+
+docker build . -t limits

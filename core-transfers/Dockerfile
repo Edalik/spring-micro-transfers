@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM amazoncorretto:17.0.14-alpine
 EXPOSE 8080
-ADD ./build/libs/*.jar mt-core-transfers.jar
+COPY ./build/libs/*.jar mt-core-transfers.jar
 ENTRYPOINT ["java", "-jar", "/mt-core-transfers.jar"]
