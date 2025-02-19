@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
-import ru.otus.java.pro.mt.core.transfers.configs.properties.DefaultRestClientProperties;
 import ru.otus.java.pro.mt.core.transfers.configs.properties.LimitsIntegrationProperties;
 
 @Configuration
@@ -14,8 +13,6 @@ import ru.otus.java.pro.mt.core.transfers.configs.properties.LimitsIntegrationPr
 public class RestClientsConfig {
 
     private final RestClientFactory restClientFactory;
-
-    private final DefaultRestClientProperties defaultRestClientProperties;
 
     private final LimitsIntegrationProperties limitsIntegrationProperties;
 
@@ -26,14 +23,8 @@ public class RestClientsConfig {
 
     @Bean
     @ConditionalOnMissingBean(RestTemplate.class)
-    public RestClient restClient() {
-        return restClientFactory.createRestClient(defaultRestClientProperties);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(RestTemplate.class)
     public RestClient limitsClient() {
-        return restClientFactory.createRestClient(limitsIntegrationProperties);
+        return restClientFactory.createRestClient(limitsIntegrationProperties.getRestClient());
     }
 
 }

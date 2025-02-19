@@ -19,11 +19,7 @@ management:
         include: '*'
 integrations:
   limits:
-    url: http://localhost:8182/api/v1/limits
-    read-timeout: 30s
-    connect-timeout: 2s
-rest:
-  client:
-    url: http://localhost:8080/api/v1
-    read-timeout: 30s
-    connect-timeout: 2s
+    rest-client:
+      url: http://localhost:8080/api/v1/limits
+      read-timeout: 30s
+      connect-timeout: 2s
