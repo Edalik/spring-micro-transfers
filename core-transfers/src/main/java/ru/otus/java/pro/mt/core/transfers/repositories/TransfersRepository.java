@@ -14,5 +14,5 @@ import java.util.Optional;
 public interface TransfersRepository extends JpaRepository<Transfer, String>, PagingAndSortingRepository<Transfer, String> {
     Optional<Transfer> findByIdAndClientId(String id, String clientId);
     List<Transfer> findAllByClientId(String clientId);
-    Page<Transfer> findAllByClientId(String clientId, Pageable pageable);
+    Page<Transfer> findByClientIdOrTargetClientId(String clientId, String targetClientId, Pageable pageable);
 }
